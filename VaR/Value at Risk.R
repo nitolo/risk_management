@@ -212,10 +212,62 @@ spec <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1,1)),
 
 
 retornos_usdcop <- na.omit(df$retornos_usdcop)
+retornos_eurusd <- na.omit(df$retornos_eurusd)
 
 
 
-fit <- ugarchfit(spec, data = retornos_usdcop)
-sim <- ugarchsim(fit, n.sim = 10000)
-var_garch <- quantile(fitted(sim), probs = 0.05)
-var_garch
+fit_usdcop <- ugarchfit(spec, data = retornos_usdcop)
+sim_usdcop <- ugarchsim(fit_usdcop, n.sim = 10000)
+var_garch_usdcop <- quantile(fitted(sim_usdcop), probs = 0.05)
+var_garch_usdcop
+
+
+fit_eurusd <- ugarchfit(spec, data = retornos_eurusd)
+sim_eurusd <- ugarchsim(fit_eurusd, n.sim = 10000)
+var_garch_eurusd <- quantile(fitted(sim_eurusd), probs = 0.05)
+var_garch_eurusd
+
+
+spec_t_aparch <- ugarchspec(
+  variance.model = list(model = "apARCH", garchOrder = c(1,1)),
+  mean.model = list(armaOrder = c(0,0)),
+  distribution.model = "std"  # t-distribution
+)
+
+
+spec_t_aparch_asym <- ugarchspec(
+  variance.model = list(model = "apARCH", garchOrder = c(1,1)),
+  mean.model = list(armaOrder = c(0,0)),
+  distribution.model = "std"
+)
+
+
+spec_t_aparch_asym_arma <- ugarchspec(
+  variance.model = list(model = "apARCH", garchOrder = c(1,1)),
+  mean.model = list(armaOrder = c(1,1)),
+  distribution.model = "std"
+)
+
+ajustar_y_simular <- function(spec, data) {
+  fit <- ugarchfit(spec, data = data)
+  sim <- ugarchsim(fit, n.sim = 10000)
+  var_95 <- quantile(fitted(sim), probs = 0.05)
+  return(list(fit = fit, VaR_95 = var_95))
+}
+
+# Aplicar a retornos_usdcop
+res_usdcop <- ajustar_y_simular(spec_t_aparch_asym_arma, retornos_usdcop)
+res_usdcop$VaR_95
+
+# Aplicar a retornos_eurusd
+res_eurusd <- ajustar_y_simular(spec_t_aparch_asym_arma, retornos_eurusd)
+res_eurusd$VaR_95
+
+# Aplicar a retornos_usdcop
+res_usdcop <- ajustar_y_simular(spec_t_aparch, retornos_usdcop)
+res_usdcop$VaR_95
+
+# Aplicar a retornos_eurusd
+res_eurusd <- ajustar_y_simular(spec_t_aparch, retornos_eurusd)
+res_eurusd$VaR_95
+
